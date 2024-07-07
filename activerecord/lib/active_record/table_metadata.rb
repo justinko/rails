@@ -29,6 +29,12 @@ module ActiveRecord
     def associated_table(table_name)
       reflection = klass._reflect_on_association(table_name) || klass._reflect_on_association(table_name.singularize)
 
+      # If the association name doesn't match the table name, then find any association whose klass has the same table name
+      reflection = klass.reflect_on_all_associations.detect do
+        _1.table_name == table_name
+      rescue NameError, ArgumentError # raised from AssociationReflection#compute_class
+      end unless reflection
+
       if !reflection && table_name == arel_table.name
         return self
       end
